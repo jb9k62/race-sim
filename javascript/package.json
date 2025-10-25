@@ -1,0 +1,23 @@
+{
+  "name": "vertical-lane-racer",
+  "version": "1.0.0",
+  "description": "A vertical lane racing game showcasing modern JavaScript features",
+  "type": "module",
+  "main": "src/main.js",
+  "scripts": {
+    "start": "node src/main.js",
+    "test": "node --test"
+  },
+  "keywords": [
+    "game",
+    "racing",
+    "terminal",
+    "async",
+    "es6"
+  ],
+  "author": "",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
