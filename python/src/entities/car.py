@@ -32,7 +32,7 @@ class Car:
         self.position: float = 0.0
         self._speed: float = random.random() * 1.5 + 0.5  # Random speed between 0.5 and 2.0
         self.symbol: str = CAR_SYMBOLS[id % len(CAR_SYMBOLS)]
-        self.status: str = 'active'  # 'active', 'crashed', 'finished'
+        self.status: str = 'active'  # 'active', 'crashed', 'finished' TODO: does python have a pythonic enum
         self._controller: Controller = controller
 
     @property
