@@ -1,59 +1,69 @@
-// Main entry point for the game
+/**
+ * Main entry point for Vertical Lane Racer
+ * Demonstrates: Top-level await, async game loop, error handling, graceful shutdown
+ */
+
 import { Game } from './game.js';
+import { Renderer } from './renderer.js';
+import { sleep } from './utils/sleep.js';
+
+// Frame rate: 100ms per frame = 10 FPS
+const FRAME_DELAY = 100;
 
 /**
- * Simple test of the game logic (Phase 2 test)
- * Full rendering will be added in Phase 4
+ * Main game loop
+ * Demonstrates: async/await, Promise handling, error handling, cleanup pattern
  */
 async function main() {
-  console.log('🏁 Vertical Lane Racer - Phase 2 Test\n');
-
   const game = new Game();
-  await game.initialize();
+  const renderer = new Renderer();
 
-  console.log('Starting race with 4 cars...\n');
+  // Flag for graceful shutdown
+  let shouldStop = false;
 
-  // Run game loop
-  let maxTicks = 100; // Safety limit
-  while (game.isRunning() && maxTicks > 0) {
-    await game.update();
+  // Setup graceful shutdown handler
+  // Demonstrates: Event handling, cleanup pattern
+  process.on('SIGINT', () => {
+    shouldStop = true;
+    renderer.cleanup();
+    console.log('\n\n👋 Game interrupted. Goodbye!\n');
+    process.exit(0);
+  });
 
-    // Print stats every 10 ticks
-    if (game.tick % 10 === 0) {
-      const stats = game.getStats();
-      console.log(`Tick ${stats.tick}: Active: ${stats.activeCars}, Crashed: ${stats.crashedCars}, Finished: ${stats.finishedCars}, Obstacles: ${stats.obstacleCount}`);
+  try {
+    // Hide cursor for cleaner rendering
+    renderer.hideCursor();
+
+    // Initialize game
+    await game.initialize();
+
+    // Main game loop
+    while (game.isRunning() && !shouldStop) {
+      await game.update();
+      renderer.render(game);
+      await sleep(FRAME_DELAY);
     }
 
-    maxTicks--;
+    // Show final results
+    if (!shouldStop) {
+      renderer.showResults(game);
+    }
 
-    // Small delay for visibility
-    await new Promise(resolve => setTimeout(resolve, 50));
-  }
-
-  // Display results
-  console.log('\n🏁 Race finished!');
-  const winner = game.getWinner();
-
-  if (winner) {
-    console.log(`🎉 Winner: Car ${winner.id} ${winner.symbol}`);
-    console.log(`   Final position: ${winner.position.toFixed(2)}`);
-  } else {
-    console.log('❌ No winner - all cars crashed!');
-  }
-
-  // Final stats
-  console.log('\n📊 Final Statistics:');
-  const finalStats = game.getStats();
-  console.log(`   Total ticks: ${finalStats.tick}`);
-  console.log(`   Active cars: ${finalStats.activeCars}`);
-  console.log(`   Crashed cars: ${finalStats.crashedCars}`);
-  console.log(`   Finished cars: ${finalStats.finishedCars}`);
-
-  // Show each car's final state
-  console.log('\n🚗 Car Details:');
-  for (const car of game.cars) {
-    console.log(`   ${car.symbol} Car ${car.id}: Lane ${car.lane}, Position ${car.position.toFixed(2)}, Status: ${car.status}`);
+  } catch (error) {
+    // Error handling
+    renderer.cleanup();
+    console.error('\n❌ Error occurred:');
+    console.error(error);
+    process.exit(1);
+  } finally {
+    // Cleanup
+    renderer.cleanup();
   }
 }
 
-main().catch(console.error);
+// Run the game
+// Demonstrates: Top-level await pattern, error handling
+main().catch(error => {
+  console.error('Fatal error:', error);
+  process.exit(1);
+});
