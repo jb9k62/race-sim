@@ -2,9 +2,12 @@
 // main.ts - Entry point for OpenTUI Racing Game
 // Phase 1: Foundation Setup - Renderer initialization and frame callback pattern
 // Phase 2: Layout Structure - Two-pane layout with flexbox
+// Phase 3: Game Pane Implementation - Track rendering with game logic
 
 import { createCliRenderer, BoxRenderable, TextRenderable } from "@opentui/core";
 import { GAME_CONFIG, COLORS, LAYOUT } from "./config.js";
+import { Game } from "./game-logic/game.js";
+import { GamePane } from "./components/game-pane.js";
 
 /**
  * Main entry point
@@ -68,43 +71,31 @@ async function main() {
     titleAlignment: "center",
   });
 
-  // Add test content to game pane
-  const gameTestText = new TextRenderable(renderer, {
-    id: "game-test-text",
-    content: [
-      "✅ Phase 2: Layout Complete!",
-      "",
-      "Game Pane (Left - 60%)",
-      "",
-      "This pane will display:",
-      "  • Racing track",
-      "  • 4 lanes with dividers",
-      "  • Car sprites (🏎️ 🚗 🚙 🏁)",
-      "  • Obstacles (🌳)",
-      "",
-      "Coming in Phase 3!",
-    ].join("\n"),
-    position: "absolute",
-    left: 2,
-    top: 2,
-    fg: "#ffffff",
-  });
+  // ==================== Phase 3: Game Logic Integration ====================
 
-  // Add test content to stats pane
+  // Initialize game logic
+  const game = new Game();
+  game.start();
+
+  // Create GamePane component
+  const gamePaneComponent = new GamePane(renderer, gamePane);
+
+  // Add test content to stats pane (Phase 4 will replace this)
   const statsTestText = new TextRenderable(renderer, {
     id: "stats-test-text",
     content: [
-      "✅ Phase 2: Layout Complete!",
+      "✅ Phase 3: Game Running!",
       "",
       "Stats Pane (Right - 40%)",
       "",
-      "This pane will display:",
-      "  • Tab selection",
-      "  • Overview stats",
-      "  • Car details",
-      "  • Event log",
+      "Watch the left pane:",
+      "  • 4 cars racing",
+      "  • Lane dividers",
+      "  • Random obstacles (🌳)",
+      "  • Collisions (💥)",
+      "  • Finish line at top",
       "",
-      "Coming in Phase 4!",
+      "Stats tabs coming in Phase 4!",
     ].join("\n"),
     position: "absolute",
     left: 2,
@@ -112,7 +103,7 @@ async function main() {
     fg: "#ffffff",
   });
 
-  // Frame counter display (bottom of game pane)
+  // Frame counter display (bottom of stats pane)
   const frameCounterText = new TextRenderable(renderer, {
     id: "frame-counter",
     content: "Frames: 0",
@@ -122,10 +113,9 @@ async function main() {
     fg: "#888888",
   });
 
-  // Add components to panes
-  gamePane.add(gameTestText);
-  gamePane.add(frameCounterText);
+  // Add components to stats pane
   statsPane.add(statsTestText);
+  statsPane.add(frameCounterText);
 
   // Add panes to main container
   mainContainer.add(gamePane);
@@ -152,16 +142,21 @@ async function main() {
 
     // Update game logic at slower rate (every 500ms)
     if (gameUpdateAccumulator >= GAME_CONFIG.GAME_UPDATE_INTERVAL_MS) {
-      gameUpdateCount++;
+      await game.updateAsync(gameUpdateAccumulator);
       gameUpdateAccumulator = 0; // Reset accumulator
+      gameUpdateCount++;
     }
 
-    // Update visual components at 30 FPS (smooth animation)
-    // For Phase 2, update the frame counter to verify animation loop
+    // Always update visual components at 30 FPS (smooth animation)
+    const gameState = game.getStateSnapshot();
+    gamePaneComponent.update(gameState);
+
+    // Update frame counter
     frameCounterText.content = [
       `Frames: ${frameCount}`,
-      `Game Updates: ${gameUpdateCount}`,
-      `Terminal: ${renderer.terminalWidth}x${renderer.terminalHeight}`,
+      `Updates: ${gameUpdateCount}`,
+      `Active: ${gameState.activeCars}`,
+      `Crashed: ${gameState.crashedCars}`,
     ].join(" | ");
   };
 
