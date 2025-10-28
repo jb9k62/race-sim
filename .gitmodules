@@ -1,0 +1,3 @@
+[submodule "opentui-src"]
+	path = opentui-src
+	url = git@github.com:sst/opentui.git
