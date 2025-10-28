@@ -1,9 +1,10 @@
 #!/usr/bin/env bun
 // main.ts - Entry point for OpenTUI Racing Game
 // Phase 1: Foundation Setup - Renderer initialization and frame callback pattern
+// Phase 2: Layout Structure - Two-pane layout with flexbox
 
 import { createCliRenderer, BoxRenderable, TextRenderable } from "@opentui/core";
-import { GAME_CONFIG, COLORS } from "./config.js";
+import { GAME_CONFIG, COLORS, LAYOUT } from "./config.js";
 
 /**
  * Main entry point
@@ -24,49 +25,114 @@ async function main() {
   // Set background color
   renderer.setBackgroundColor(COLORS.MAIN_BG);
 
-  // Create a simple container to test rendering (Phase 1 - Hello World)
-  const container = new BoxRenderable(renderer, {
-    id: "test-container",
+  // ==================== Phase 2: Two-Pane Layout ====================
+
+  // Main container for both panes (horizontal split)
+  // Learning Note: flexDirection: "row" creates horizontal layout
+  const mainContainer = new BoxRenderable(renderer, {
+    id: "main-container",
+    flexDirection: "row",         // Horizontal layout (left | right)
+    alignItems: "stretch",        // Fill full height
+    width: renderer.terminalWidth,
+    height: renderer.terminalHeight,
     position: "absolute",
     left: 0,
     top: 0,
-    width: renderer.terminalWidth,
-    height: renderer.terminalHeight,
     backgroundColor: COLORS.MAIN_BG,
+  });
+
+  // Left pane: Game (60% width)
+  // Learning Note: flexGrow ratio determines relative widths (3:2 = 60:40)
+  const gamePane = new BoxRenderable(renderer, {
+    id: "game-pane",
+    flexGrow: LAYOUT.GAME_PANE_FLEX,   // 3 parts out of 5 = 60%
+    flexShrink: 0,
+    backgroundColor: COLORS.GAME_PANE_BG,
     border: true,
     borderStyle: "rounded",
     borderColor: COLORS.GAME_BORDER,
-    title: "🏁 OpenTUI Racing Game - Phase 1 Test",
+    title: "🏁 Race Track",
     titleAlignment: "center",
   });
 
-  // Add test text
-  const testText = new TextRenderable(renderer, {
-    id: "test-text",
+  // Right pane: Stats (40% width)
+  const statsPane = new BoxRenderable(renderer, {
+    id: "stats-pane",
+    flexGrow: LAYOUT.STATS_PANE_FLEX,  // 2 parts out of 5 = 40%
+    flexShrink: 0,
+    backgroundColor: COLORS.STATS_PANE_BG,
+    border: true,
+    borderStyle: "rounded",
+    borderColor: COLORS.STATS_BORDER,
+    title: "📊 Stats & Info",
+    titleAlignment: "center",
+  });
+
+  // Add test content to game pane
+  const gameTestText = new TextRenderable(renderer, {
+    id: "game-test-text",
     content: [
-      "✅ Phase 1: Foundation Setup Complete!",
+      "✅ Phase 2: Layout Complete!",
       "",
-      "Renderer Status:",
-      `  • FPS: ${GAME_CONFIG.RENDER_FPS}`,
-      `  • Terminal Size: ${renderer.terminalWidth}x${renderer.terminalHeight}`,
-      `  • Game Update Interval: ${GAME_CONFIG.GAME_UPDATE_INTERVAL_MS}ms`,
+      "Game Pane (Left - 60%)",
       "",
-      "Frame Callback Test:",
-      "  • Frame counter will increment below...",
+      "This pane will display:",
+      "  • Racing track",
+      "  • 4 lanes with dividers",
+      "  • Car sprites (🏎️ 🚗 🚙 🏁)",
+      "  • Obstacles (🌳)",
       "",
-      "Frames rendered: 0",
-      "",
-      "Controls:",
-      "  • ESC or Ctrl+C: Quit",
+      "Coming in Phase 3!",
     ].join("\n"),
     position: "absolute",
-    left: 4,
+    left: 2,
     top: 2,
     fg: "#ffffff",
   });
 
-  container.add(testText);
-  renderer.root.add(container);
+  // Add test content to stats pane
+  const statsTestText = new TextRenderable(renderer, {
+    id: "stats-test-text",
+    content: [
+      "✅ Phase 2: Layout Complete!",
+      "",
+      "Stats Pane (Right - 40%)",
+      "",
+      "This pane will display:",
+      "  • Tab selection",
+      "  • Overview stats",
+      "  • Car details",
+      "  • Event log",
+      "",
+      "Coming in Phase 4!",
+    ].join("\n"),
+    position: "absolute",
+    left: 2,
+    top: 2,
+    fg: "#ffffff",
+  });
+
+  // Frame counter display (bottom of game pane)
+  const frameCounterText = new TextRenderable(renderer, {
+    id: "frame-counter",
+    content: "Frames: 0",
+    position: "absolute",
+    left: 2,
+    bottom: 2,
+    fg: "#888888",
+  });
+
+  // Add components to panes
+  gamePane.add(gameTestText);
+  gamePane.add(frameCounterText);
+  statsPane.add(statsTestText);
+
+  // Add panes to main container
+  mainContainer.add(gamePane);
+  mainContainer.add(statsPane);
+
+  // Add main container to renderer root
+  renderer.root.add(mainContainer);
 
   // Start the renderer
   renderer.start();
@@ -91,26 +157,12 @@ async function main() {
     }
 
     // Update visual components at 30 FPS (smooth animation)
-    // For Phase 1, just update the frame counter
-    testText.content = [
-      "✅ Phase 1: Foundation Setup Complete!",
-      "",
-      "Renderer Status:",
-      `  • FPS: ${GAME_CONFIG.RENDER_FPS}`,
-      `  • Terminal Size: ${renderer.terminalWidth}x${renderer.terminalHeight}`,
-      `  • Game Update Interval: ${GAME_CONFIG.GAME_UPDATE_INTERVAL_MS}ms`,
-      "",
-      "Frame Callback Test:",
-      "  • Frame counter incrementing = renderer working! ✓",
-      "",
-      `Frames rendered: ${frameCount} (${GAME_CONFIG.RENDER_FPS} FPS)`,
-      `Game updates: ${gameUpdateCount} (${1000 / GAME_CONFIG.GAME_UPDATE_INTERVAL_MS} Hz)`,
-      "",
-      "Controls:",
-      "  • ESC or Ctrl+C: Quit",
-      "",
-      "Next: Phase 2 - Two-pane layout implementation",
-    ].join("\n");
+    // For Phase 2, update the frame counter to verify animation loop
+    frameCounterText.content = [
+      `Frames: ${frameCount}`,
+      `Game Updates: ${gameUpdateCount}`,
+      `Terminal: ${renderer.terminalWidth}x${renderer.terminalHeight}`,
+    ].join(" | ");
   };
 
   // Register frame callback
@@ -129,9 +181,11 @@ async function main() {
   });
 
   // Handle terminal resize
+  // Learning Note: OpenTUI's Yoga layout auto-recalculates on property changes
   const handleResize = () => {
-    container.width = renderer.terminalWidth;
-    container.height = renderer.terminalHeight;
+    mainContainer.width = renderer.terminalWidth;
+    mainContainer.height = renderer.terminalHeight;
+    // Flexbox will automatically recalculate child pane sizes (60:40 ratio)
   };
 
   renderer.on("resize", handleResize);
