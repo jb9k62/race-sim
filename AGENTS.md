@@ -1,6 +1,6 @@
-# CLAUDE.md
+# AGENTS.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+This file provides guidance to pi, the coding agent, when working with this repository.
 
 ## Project Overview
 
@@ -153,7 +153,7 @@ race_sim/
 ├── opentui-src/          # Git submodule: OpenTUI library
 ├── package.json          # Root dependencies for TUI
 ├── tsconfig.json         # TypeScript config
-├── CLAUDE.md             # This file
+├── AGENTS.md            # This file
 ├── README.md             # Main documentation
 └── game.md               # Game design document
 ```
